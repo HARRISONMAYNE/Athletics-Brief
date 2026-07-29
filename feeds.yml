@@ -68,6 +68,32 @@ routing:
      "youth", "national athletics league", "county championships",
      "loughborough international", "english schools"]
 
+# Anything whose headline or summary matches these is binned before the brief is
+# written. Gear, product launches and affiliate content. Tune freely — if a real
+# story ever gets caught, the culprit will be one of these words.
+exclude:
+  - shoe
+  - sneaker
+  - footwear
+  - vaporfly
+  - alphafly
+  - adizero
+  - supershoe
+  - "super shoe"
+  - "carbon plate"
+  - colourway
+  - colorway
+  - restock
+  - "buying guide"
+  - "we tested"
+  - "best running"
+  - "gear guide"
+  - "% off"
+  - "on sale"
+  - discount
+  - "prime day"
+  - "black friday"
+
 # Pulled to the top of their section and marked in amber.
 watchlist:
   - Keely Hodgkinson
@@ -90,39 +116,52 @@ watchlist:
   - Hannah Cockroft
   - Jake Odey-Jordan
 
-# Section five of the brief. Anything in the past drops off automatically, so
-# top this up every few weeks and it stays a live fixture list.
+# The preview section. Anything in the past drops off automatically, so top this
+# up every few weeks and it stays live. scope: national or international.
 events:
   - date: 2026-08-01
     name: "Commonwealth Games athletics concludes — Scotstoun, Glasgow"
+    scope: national
     note: "Commonwealth Mile final; Games close 2 August"
     link: "https://www.glasgow2026.com/results/day-by-day"
   - date: 2026-08-05
     name: "World Athletics U20 Championships — Hayward Field, Eugene"
+    scope: international
     note: "To 9 August. GB & NI team of 49; Jake Odey-Jordan doubles up"
     link: "https://worldathletics.org/news"
   - date: 2026-08-10
     name: "European Athletics Championships — Alexander Stadium, Birmingham"
+    scope: national
     note: "To 16 August. First UK staging. Hodgkinson, Asher-Smith, KJT, Hudson-Smith"
     link: "https://tickets.birmingham26.com/timetable"
   - date: 2026-08-21
     name: "Diamond League — Lausanne"
+    scope: international
     link: "https://www.diamondleague.com/calendar/"
   - date: 2026-08-22
     name: "National Athletics League Premiership, round 3 — Eton"
+    scope: national
     note: "Title decider; results on OpenTrack, stream on Vinco Sport"
     link: "https://www.nationalathleticsleague.org.uk/results-2026/"
   - date: 2026-08-23
     name: "Diamond League — Silesia"
+    scope: international
     link: "https://www.diamondleague.com/calendar/"
   - date: 2026-08-27
     name: "Diamond League — Zurich"
+    scope: international
     link: "https://www.diamondleague.com/calendar/"
   - date: 2026-09-04
     name: "Diamond League Final — Brussels"
+    scope: international
     note: "Two days. Winners qualify automatically for Budapest"
     link: "https://www.diamondleague.com/calendar/"
   - date: 2026-09-11
     name: "World Athletics Ultimate Championship — Budapest"
+    scope: international
     note: "To 13 September. 28 events, $10m pot, no heats"
     link: "https://worldathletics.org/competitions/world-athletics-ultimate-championship"
+  - date: 2026-09-18
+    scope: national
+    name: "Athlos — StoneX Stadium, London"
+    note: "London debut of the women-only meet"

@@ -21,6 +21,15 @@ sections:
         url: "https://feeds.bbci.co.uk/sport/athletics/rss.xml"
       - name: Home nations
         url: "https://news.google.com/rss/search?q=(%22scottishathletics%22+OR+%22Welsh+Athletics%22+OR+%22Athletics+Northern+Ireland%22)&hl=en-GB&gl=GB&ceid=GB:en"
+      - name: Domestic chatter
+        trust: unverified
+        url: "https://news.google.com/rss/search?q=(%22Power+of+10%22+OR+%22runbritain%22+OR+%22athletics+forum%22)&hl=en-GB&gl=GB&ceid=GB:en"
+      - name: AW forum
+        trust: unverified
+        url: "https://forum.athleticsweekly.com/index.php?forums/-/index.rss"
+      - name: Ian Hodge via RSSHub
+        trust: unverified
+        url: "https://rsshub.app/twitter/user/ian_hodge8"
       - name: British records
         url: "https://news.google.com/rss/search?q=(%22British+record%22+OR+%22national+record%22)+athletics&hl=en-GB&gl=GB&ceid=GB:en"
 
@@ -33,6 +42,20 @@ sections:
         url: "https://news.google.com/rss/search?q=(%22National+Athletics+League%22+OR+%22county+championships%22+OR+%22Loughborough+International%22)+athletics&hl=en-GB&gl=GB&ceid=GB:en"
       - name: Junior records
         url: "https://news.google.com/rss/search?q=(%22U20+record%22+OR+%22U17+record%22+OR+%22junior+record%22)+athletics&hl=en-GB&gl=GB&ceid=GB:en"
+      - name: English Schools
+        url: "https://news.google.com/rss/search?q=site:esaa.org.uk+OR+%22English+Schools+athletics%22&hl=en-GB&gl=GB&ceid=GB:en"
+      - name: National League
+        url: "https://news.google.com/rss/search?q=site:nationalathleticsleague.org.uk+OR+%22National+Athletics+League%22&hl=en-GB&gl=GB&ceid=GB:en"
+      - name: GB juniors
+        url: "https://news.google.com/rss/search?q=(%22GB+%26+NI%22+OR+%22British+team%22)+(U20+OR+U18+OR+junior)+athletics&hl=en-GB&gl=GB&ceid=GB:en"
+      - name: Forums and social
+        trust: unverified
+        url: "https://www.reddit.com/r/trackandfield/new/.rss"
+      - name: UK running talk
+        trust: unverified
+        url: "https://www.reddit.com/r/ukrunning/new/.rss"
+      - name: Club scene
+        url: "https://news.google.com/rss/search?q=(%22Birchfield%22+OR+%22Blackheath+and+Bromley%22+OR+%22Thames+Valley+Harriers%22+OR+%22athletics+club%22)+athletics&hl=en-GB&gl=GB&ceid=GB:en"
 
   - key: para
     title: "Para"
@@ -41,6 +64,18 @@ sections:
         url: "https://news.google.com/rss/search?q=site:paralympic.org+athletics&hl=en-GB&gl=GB&ceid=GB:en"
       - name: ParalympicsGB
         url: "https://news.google.com/rss/search?q=(ParalympicsGB+OR+%22para+athletics%22)+British&hl=en-GB&gl=GB&ceid=GB:en"
+      - name: Classifications
+        url: "https://news.google.com/rss/search?q=athletics+(T38+OR+T54+OR+T20+OR+F55+OR+%22wheelchair+racing%22)&hl=en-GB&gl=GB&ceid=GB:en"
+      - name: Para championships
+        url: "https://news.google.com/rss/search?q=%22para+athletics%22+(championships+OR+Commonwealth+OR+world)&hl=en-GB&gl=GB&ceid=GB:en"
+      - name: Para social
+        trust: unverified
+        url: "https://www.reddit.com/r/Paralympics/new/.rss"
+      - name: Para blogs
+        trust: unverified
+        url: "https://news.google.com/rss/search?q=%22para+athletics%22+(blog+OR+interview+OR+profile)&hl=en-GB&gl=GB&ceid=GB:en"
+      - name: Para names
+        url: "https://news.google.com/rss/search?q=(Cockroft+OR+%22Sophie+Hahn%22+OR+%22Nathan+Maguire%22+OR+%22Ben+Sandilands%22+OR+%22Dan+Greaves%22)&hl=en-GB&gl=GB&ceid=GB:en"
 
   - key: international
     title: "International"
@@ -68,6 +103,15 @@ routing:
      "youth", "national athletics league", "county championships",
      "loughborough international", "english schools"]
 
+# trust: unverified marks a source as chatter — forums, social, aggregators.
+# Those items are still gathered, but they are quarantined: the brief flags them
+# as unconfirmed and is forbidden from stating them as fact. Leave the flag on.
+#
+# Adding your own: Bluesky accounts expose RSS at
+# https://bsky.app/profile/HANDLE/rss — drop any statistician you follow in here
+# with trust: unverified. X has no public feed; the RSSHub route below is a
+# public proxy that is often rate-limited, so treat it as a bonus, not a source.
+#
 # Anything whose headline or summary matches these is binned before the brief is
 # written. Gear, product launches and affiliate content. Tune freely — if a real
 # story ever gets caught, the culprit will be one of these words.
@@ -124,6 +168,10 @@ events:
     scope: national
     note: "Commonwealth Mile final; Games close 2 August"
     link: "https://www.glasgow2026.com/results/day-by-day"
+  - date: 2026-08-02
+    scope: national
+    name: "Commonwealth Games closing ceremony — Glasgow"
+    note: "Medal table, home-nations reckoning, and what Glasgow proved about the scaled-back Games model"
   - date: 2026-08-05
     name: "World Athletics U20 Championships — Hayward Field, Eugene"
     scope: international

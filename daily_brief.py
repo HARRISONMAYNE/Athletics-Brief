@@ -32,8 +32,8 @@ import yaml
 
 ROOT = Path(__file__).parent
 DOCS = ROOT / "docs"
-WINDOW_HOURS = 26  # slight overlap so nothing falls between runs
-EVENTS_SHOWN = 8
+WINDOW_HOURS = 36  # a day and a half, so evening results still land in the morning
+EVENTS_SHOWN = 14
 
 # Design tokens. Blue is the track; amber marks a watchlist name.
 INK, PAPER, RULE = "#0E1116", "#F5F6F4", "#D6D9D4"
@@ -68,7 +68,7 @@ def pull(feeds, cutoff, section_key):
                 if when and when < cutoff:
                     continue
                 summary = re.sub(r"<[^>]+>", " ", entry.get("summary", ""))
-                summary = re.sub(r"\s+", " ", summary).strip()[:1200]
+                summary = re.sub(r"\s+", " ", summary).strip()[:2000]
                 items.append({
                     "title": entry.get("title", "").strip(),
                     "summary": summary,
@@ -269,16 +269,35 @@ SOURCING — every factual claim carries its link, inline, immediately after it:
 - Where several items cover one story, link each as you draw on it, so he can
   see which outlet said what.
 
-DEPTH — this is a working brief, not a summary:
-- Every item worth mentioning gets its own treatment: what happened, what it
-  means, what he might say about it. Two or three sentences minimum, more when
-  the story carries it.
-- Draw the connections between items. A result in one section often explains a
-  selection or an absence in another; say so.
-- Give him the line he can use on air — the comparison, the context, the thing
-  that makes a result matter beyond the result.
-- Where the material is genuinely thin in a section, say so plainly in a line
-  and move on. Thin is fine; padding is not.
+DEPTH — this is a long working brief, not a summary. He reads it over coffee
+and broadcasts off it for the rest of the day:
+- Every item worth mentioning gets a full paragraph at minimum. The significant
+  ones get several. Do not compress to save space — space is not the constraint.
+- For each significant story cover: what happened, the numbers, who was beaten,
+  what it changes, how it connects to what is coming, and the line he could
+  actually say on air.
+- Draw connections relentlessly. A result in one section explains a selection or
+  an absence in another; a junior performance today is a senior story in three
+  years; a domestic mark reframes a national ranking. Say all of it.
+- Give him rivalries, head-to-heads, comeback arcs, selection politics, coaching
+  and club context, and the shape of a season — not just today's facts.
+- For the Preview, treat every fixture properly: what is at stake, who is
+  entered, which storylines from the sections above land there, what he should
+  be reading up on before it.
+- Where a section is genuinely empty, say so in a line rather than padding it.
+  Empty is a fact about the day; padding is a lie about it.
+
+CONTEXT vs FACTS — the one line you must not cross:
+- You MAY use general knowledge for context: who an athlete is, what a
+  championship means, why a rivalry matters, how a qualifying system works, the
+  history of an event, what a club or coach is known for. This is what makes the
+  brief worth reading and you should use it generously.
+- You MUST NOT use general knowledge for any specific figure. Every time, mark,
+  distance, placing, date, margin, record and ranking must come from the
+  supplied material or not appear at all. If you find yourself recalling a
+  personal best rather than reading one, leave it out.
+- When you give context from your own knowledge rather than the material, keep
+  it qualitative and do not attach a source link to it.
 
 STYLE: British English. UK times. Flowing prose he can read at 6am, not
 bullets. Warm, direct, specific. Around 700-1000 words total. Lead each section
@@ -292,7 +311,7 @@ def write_article(blocks, events, api_key):
     material = []
     for title, items in blocks:
         material.append(f"\n=== {title} ({len(items)} items) ===")
-        for item in items[:22]:
+        for item in items[:35]:
             when = item["when"].strftime("%d %b %H:%M") if item["when"] else "undated"
             tag = " UNVERIFIED" if item.get("trust") == "unverified" else ""
             material.append(f"- [{item['source']}, {when}{tag}] {item['title']}")
@@ -322,13 +341,13 @@ def write_article(blocks, events, api_key):
         "fixture you have no material for beyond what the fixture line itself "
         "says.\n\nReturn ONLY an HTML fragment — <h2> for "
         "headings, <p> for paragraphs, <a href> for links. No markdown, no code "
-        "fences, no <html> or <body> tags.\n\nAim for 1400-2000 words. Link every claim inline to the URL it came from.\n\n" + "\n".join(material)
+        "fences, no <html> or <body> tags.\n\nAim for 3000-4500 words. This is a long read and should be. Link every claim inline to the URL it came from.\n\n" + "\n".join(material)
     )
 
     client = anthropic.Anthropic(api_key=api_key)
     response = client.messages.create(
         model="claude-sonnet-5",
-        max_tokens=8000,
+        max_tokens=16000,
         system=SYSTEM_PROMPT,
         messages=[{"role": "user", "content": prompt}],
     )
@@ -366,7 +385,7 @@ def render_source_list(blocks):
             continue
         links = " · ".join(
             f'<a href="{escape(i["link"])}" style="color:{MUTED}">'
-            f'{escape(i["source"])}</a>' for i in items[:22])
+            f'{escape(i["source"])}</a>' for i in items[:35])
         rows.append(f'<p style="font-size:12px;line-height:1.7;margin:0 0 10px;'
                     f'color:{MUTED}"><strong>{escape(title)}</strong><br>{links}</p>')
     return "".join(rows)

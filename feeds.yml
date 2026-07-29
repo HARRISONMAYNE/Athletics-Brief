@@ -1,0 +1,128 @@
+# Sources and structure for the Daily Athletics Brief.
+#
+# Section order here is the order they appear in the brief and the email.
+# Rearrange the blocks and the output rearranges with them.
+#
+# Run `python daily_brief.py --check` to test every URL. Dead feeds are skipped
+# at runtime and named at the foot of the brief, so a broken source never
+# breaks the run.
+
+sections:
+  - key: national
+    title: "National — UK"
+    feeds:
+      - name: Athletics Weekly
+        url: "https://athleticsweekly.com/feed/"
+      - name: UK Athletics
+        url: "https://news.google.com/rss/search?q=site:britishathletics.org.uk&hl=en-GB&gl=GB&ceid=GB:en"
+      - name: England Athletics
+        url: "https://www.englandathletics.org/feed/"
+      - name: BBC Athletics
+        url: "https://feeds.bbci.co.uk/sport/athletics/rss.xml"
+      - name: Home nations
+        url: "https://news.google.com/rss/search?q=(%22scottishathletics%22+OR+%22Welsh+Athletics%22+OR+%22Athletics+Northern+Ireland%22)&hl=en-GB&gl=GB&ceid=GB:en"
+      - name: British records
+        url: "https://news.google.com/rss/search?q=(%22British+record%22+OR+%22national+record%22)+athletics&hl=en-GB&gl=GB&ceid=GB:en"
+
+  - key: youth
+    title: "Youth & Grassroots"
+    feeds:
+      - name: Age group
+        url: "https://news.google.com/rss/search?q=(%22English+Schools%22+OR+%22World+U20%22+OR+%22European+U18%22)+athletics&hl=en-GB&gl=GB&ceid=GB:en"
+      - name: Club and league
+        url: "https://news.google.com/rss/search?q=(%22National+Athletics+League%22+OR+%22county+championships%22+OR+%22Loughborough+International%22)+athletics&hl=en-GB&gl=GB&ceid=GB:en"
+      - name: Junior records
+        url: "https://news.google.com/rss/search?q=(%22U20+record%22+OR+%22U17+record%22+OR+%22junior+record%22)+athletics&hl=en-GB&gl=GB&ceid=GB:en"
+
+  - key: para
+    title: "Para"
+    feeds:
+      - name: World Para Athletics
+        url: "https://news.google.com/rss/search?q=site:paralympic.org+athletics&hl=en-GB&gl=GB&ceid=GB:en"
+      - name: ParalympicsGB
+        url: "https://news.google.com/rss/search?q=(ParalympicsGB+OR+%22para+athletics%22)+British&hl=en-GB&gl=GB&ceid=GB:en"
+
+  - key: international
+    title: "International"
+    feeds:
+      - name: World Athletics
+        url: "https://news.google.com/rss/search?q=site:worldathletics.org&hl=en-GB&gl=GB&ceid=GB:en"
+      - name: LetsRun
+        url: "https://www.letsrun.com/feed/"
+      - name: CITIUS Mag
+        url: "https://citiusmag.com/feed"
+      - name: Diamond League
+        url: "https://news.google.com/rss/search?q=%22Diamond+League%22+athletics&hl=en-GB&gl=GB&ceid=GB:en"
+      - name: Championships
+        url: "https://news.google.com/rss/search?q=(%22Commonwealth+Games%22+OR+%22European+Athletics%22+OR+%22Ultimate+Championship%22)+athletics&hl=en-GB&gl=GB&ceid=GB:en"
+
+# Anything matching these lands in that section regardless of which feed it
+# arrived in, so a para result carried by a general outlet still files correctly.
+routing:
+  para:
+    ["para athletics", "paralympic", "wheelchair", "ambulant", " t11", " t12",
+     " t20", " t35", " t37", " t38", " t44", " t47", " t53", " t54", " f42",
+     " f55", " f57", " f64", "classification"]
+  youth:
+    ["u20", "u18", "u17", "u23", "under-20", "under-17", "junior", "schools",
+     "youth", "national athletics league", "county championships",
+     "loughborough international", "english schools"]
+
+# Pulled to the top of their section and marked in amber.
+watchlist:
+  - Keely Hodgkinson
+  - Josh Kerr
+  - Jake Wightman
+  - Georgia Hunter Bell
+  - Dina Asher-Smith
+  - Katarina Johnson-Thompson
+  - Matthew Hudson-Smith
+  - Amy Hunt
+  - Romell Glave
+  - Jeremiah Azu
+  - Jake Heyward
+  - Eilish McColgan
+  - Sophie Hahn
+  - Thomas Young
+  - Nathan Maguire
+  - Dan Greaves
+  - Ben Sandilands
+  - Hannah Cockroft
+  - Jake Odey-Jordan
+
+# Section five of the brief. Anything in the past drops off automatically, so
+# top this up every few weeks and it stays a live fixture list.
+events:
+  - date: 2026-08-01
+    name: "Commonwealth Games athletics concludes — Scotstoun, Glasgow"
+    note: "Commonwealth Mile final; Games close 2 August"
+    link: "https://www.glasgow2026.com/results/day-by-day"
+  - date: 2026-08-05
+    name: "World Athletics U20 Championships — Hayward Field, Eugene"
+    note: "To 9 August. GB & NI team of 49; Jake Odey-Jordan doubles up"
+    link: "https://worldathletics.org/news"
+  - date: 2026-08-10
+    name: "European Athletics Championships — Alexander Stadium, Birmingham"
+    note: "To 16 August. First UK staging. Hodgkinson, Asher-Smith, KJT, Hudson-Smith"
+    link: "https://tickets.birmingham26.com/timetable"
+  - date: 2026-08-21
+    name: "Diamond League — Lausanne"
+    link: "https://www.diamondleague.com/calendar/"
+  - date: 2026-08-22
+    name: "National Athletics League Premiership, round 3 — Eton"
+    note: "Title decider; results on OpenTrack, stream on Vinco Sport"
+    link: "https://www.nationalathleticsleague.org.uk/results-2026/"
+  - date: 2026-08-23
+    name: "Diamond League — Silesia"
+    link: "https://www.diamondleague.com/calendar/"
+  - date: 2026-08-27
+    name: "Diamond League — Zurich"
+    link: "https://www.diamondleague.com/calendar/"
+  - date: 2026-09-04
+    name: "Diamond League Final — Brussels"
+    note: "Two days. Winners qualify automatically for Budapest"
+    link: "https://www.diamondleague.com/calendar/"
+  - date: 2026-09-11
+    name: "World Athletics Ultimate Championship — Budapest"
+    note: "To 13 September. 28 events, $10m pot, no heats"
+    link: "https://worldathletics.org/competitions/world-athletics-ultimate-championship"

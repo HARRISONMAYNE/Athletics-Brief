@@ -345,12 +345,26 @@ def write_article(blocks, events, api_key):
     )
 
     client = anthropic.Anthropic(api_key=api_key)
-    response = client.messages.create(
-        model="claude-sonnet-5",
-        max_tokens=16000,
-        system=SYSTEM_PROMPT,
-        messages=[{"role": "user", "content": prompt}],
-    )
+
+    # Account output limits vary. Ask for a lot, and step down rather than fail.
+    last_error = None
+    for budget in (16000, 8000, 4000, 2000):
+        try:
+            response = client.messages.create(
+                model="claude-sonnet-5",
+                max_tokens=budget,
+                system=SYSTEM_PROMPT,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            print(f"Written with a {budget}-token budget.")
+            break
+        except Exception as exc:
+            last_error = exc
+            print(f"  {budget} tokens rejected: {exc}")
+            continue
+    else:
+        raise RuntimeError(f"every token budget failed; last error: {last_error}")
+
     text = "".join(b.text for b in response.content if b.type == "text").strip()
     for fence in ("```html", "```"):
         text = text.replace(fence, "")

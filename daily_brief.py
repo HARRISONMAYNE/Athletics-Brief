@@ -17,7 +17,9 @@ lives in this file:
 from __future__ import annotations
 
 import argparse
+import json
 import os
+import re
 import smtplib
 import sys
 from datetime import date, datetime, timedelta, timezone
@@ -65,8 +67,11 @@ def pull(feeds, cutoff, section_key):
                 when = entry_time(entry)
                 if when and when < cutoff:
                     continue
+                summary = re.sub(r"<[^>]+>", " ", entry.get("summary", ""))
+                summary = re.sub(r"\s+", " ", summary).strip()[:600]
                 items.append({
                     "title": entry.get("title", "").strip(),
+                    "summary": summary,
                     "link": entry.get("link", ""),
                     "source": feed["name"],
                     "when": when,
@@ -86,6 +91,19 @@ def reroute(items, routing):
                 item["section"] = key
                 break
     return items
+
+
+def drop_excluded(items, exclude):
+    """Bin gear, product and affiliate content before the brief is written."""
+    if not exclude:
+        return items, 0
+    terms = [e.lower() for e in exclude]
+    kept = []
+    for item in items:
+        haystack = (item["title"] + " " + item.get("summary", "")).lower()
+        if not any(term in haystack for term in terms):
+            kept.append(item)
+    return kept, len(items) - len(kept)
 
 
 def dedupe(items):
@@ -131,11 +149,12 @@ def render_items(items, watchlist):
     return "".join(rows)
 
 
-def render_events(events):
+def render_events(events, scope=None):
     today = date.today()
-    upcoming = sorted(
-        (e for e in events if e["date"] >= today), key=lambda e: e["date"]
-    )[:EVENTS_SHOWN]
+    pool = [e for e in events if e["date"] >= today]
+    if scope:
+        pool = [e for e in pool if e.get("scope", "international") == scope]
+    upcoming = sorted(pool, key=lambda e: e["date"])[:EVENTS_SHOWN]
     if not upcoming:
         return (f'<p style="margin:0;color:{MUTED};font-size:15px">'
                 "No fixtures listed. Top up the <code>events</code> block in "
@@ -167,14 +186,23 @@ def section(title, count_label, body):
             f'margin:0 0 18px">{count_label}</div>{body}')
 
 
-def build_html(blocks, events, failures, watchlist):
+def build_html(blocks, events, failures, watchlist, article=None):
     today = datetime.now(timezone.utc).strftime("%A %d %B %Y")
-    body = "".join(
-        section(title, f'{len(items)} item{"" if len(items) == 1 else "s"}',
-                render_items(items, watchlist))
-        for title, items in blocks
-    )
-    body += section("Events to keep an eye on", "next up", render_events(events))
+    if article:
+        body = style_article(article)
+        body += (f'<h2 style="font-size:13px;letter-spacing:.14em;'
+                 f'text-transform:uppercase;color:{TRACK};margin:40px 0 10px;'
+                 f'font-weight:700">Sources</h2>' + render_source_list(blocks))
+    else:
+        body = "".join(
+            section(title, f'{len(items)} item{"" if len(items) == 1 else "s"}',
+                    render_items(items, watchlist))
+            for title, items in blocks
+        )
+        body += section("Preview — national", "coming up in the UK",
+                        render_events(events, "national"))
+        body += section("Preview — international", "coming up abroad",
+                        render_events(events, "international"))
     log = (f'Feeds not responding this run: {escape(", ".join(failures))}.'
            if failures else "All feeds responded.")
     return f"""<!doctype html>
@@ -201,6 +229,107 @@ def build_html(blocks, events, failures, watchlist):
     <p style="font-size:12px;color:{MUTED};margin:8px 0 0">{log}</p>
   </div>
 </div></body></html>"""
+
+
+SYSTEM_PROMPT = """You write a daily morning brief for a professional athletics
+commentator working in the UK. He needs hard facts and storylines he can use on
+air within the hour.
+
+ABSOLUTE RULES — breaking these is worse than a thin brief:
+- Use ONLY facts contained in the material supplied. You have no other sources.
+- NEVER invent or estimate a time, distance, mark, placing, score or margin. If
+  a headline says an athlete won but gives no time, write that they won and say
+  the time isn't in the wire yet. A wrong number said on air is a sacking
+  offence; an absent one is nothing.
+- Attribute by outlet name in the prose: "Athletics Weekly reports", "per BBC
+  Sport".
+- If a section has little or nothing in it, say so in one honest line. Do not
+  pad, and do not import background from memory to fill the space.
+- Flag anything that reads as a record with "subject to ratification".
+- Never write about shoes, spikes, kit or gear. He does not care and it is not sport.
+
+STYLE: British English. UK times. Flowing prose he can read at 6am, not
+bullets. Warm, direct, specific. Around 700-1000 words total. Lead each section
+with whatever matters most. No preamble, no sign-off, no "in conclusion"."""
+
+
+def write_article(blocks, events, api_key):
+    """Hand the gathered material to Claude and get back a written brief."""
+    import anthropic
+
+    material = []
+    for title, items in blocks:
+        material.append(f"\n=== {title} ({len(items)} items) ===")
+        for item in items[:14]:
+            when = item["when"].strftime("%d %b %H:%M") if item["when"] else "undated"
+            material.append(f"- [{item['source']}, {when}] {item['title']}")
+            if item.get("summary"):
+                material.append(f"  {item['summary']}")
+            material.append(f"  {item['link']}")
+
+    for scope in ("national", "international"):
+        pool = [e for e in events
+                if e["date"] >= date.today()
+                and e.get("scope", "international") == scope]
+        material.append(f"\n=== Fixtures ahead — {scope} ===")
+        for event in sorted(pool, key=lambda e: e["date"])[:EVENTS_SHOWN]:
+            days = (event["date"] - date.today()).days
+            material.append(
+                f"- {event['date']:%a %d %b} ({days} days away): {event['name']}"
+                + (f" — {event.get('note')}" if event.get("note") else ""))
+
+    prompt = (
+        f"Today is {date.today():%A %d %B %Y}. Write today's brief from the "
+        "material below.\n\nSections, in this order, each under an <h2>: "
+        "Top Line, National, Youth & Grassroots, Para, International, "
+        "then a Preview section with two <h3> subheadings inside it — National "
+        "and International.\n\nThe Preview is not a list of dates. For each "
+        "fixture, say what is actually at stake and who to watch, drawing on "
+        "the material above where it connects — but invent nothing about a "
+        "fixture you have no material for beyond what the fixture line itself "
+        "says.\n\nReturn ONLY an HTML fragment — <h2> for "
+        "headings, <p> for paragraphs, <a href> for links. No markdown, no code "
+        "fences, no <html> or <body> tags.\n\n" + "\n".join(material)
+    )
+
+    client = anthropic.Anthropic(api_key=api_key)
+    response = client.messages.create(
+        model="claude-sonnet-5",
+        max_tokens=4000,
+        system=SYSTEM_PROMPT,
+        messages=[{"role": "user", "content": prompt}],
+    )
+    text = "".join(b.text for b in response.content if b.type == "text").strip()
+    for fence in ("```html", "```"):
+        text = text.replace(fence, "")
+    return text.strip()
+
+
+def style_article(fragment):
+    """Apply the brief's typography to Claude's HTML."""
+    fragment = fragment.replace(
+        "<h2>", f'<h2 style="font-size:13px;letter-spacing:.14em;'
+                f'text-transform:uppercase;color:{TRACK};margin:34px 0 10px;'
+                f'font-weight:700">')
+    fragment = fragment.replace(
+        "<p>", '<p style="font-size:17px;line-height:1.6;margin:0 0 16px">')
+    fragment = fragment.replace(
+        "<h3>", '<h3 style="font-size:15px;margin:22px 0 8px;font-weight:700">')
+    fragment = fragment.replace("<a ", f'<a style="color:{TRACK}" ')
+    return fragment
+
+
+def render_source_list(blocks):
+    rows = []
+    for title, items in blocks:
+        if not items:
+            continue
+        links = " · ".join(
+            f'<a href="{escape(i["link"])}" style="color:{MUTED}">'
+            f'{escape(i["source"])}</a>' for i in items[:14])
+        rows.append(f'<p style="font-size:12px;line-height:1.7;margin:0 0 10px;'
+                    f'color:{MUTED}"><strong>{escape(title)}</strong><br>{links}</p>')
+    return "".join(rows)
 
 
 def send_email(html):
@@ -262,12 +391,27 @@ def main():
         all_items += items
         failures += failed
 
+    all_items, binned = drop_excluded(all_items, config.get("exclude", []))
     all_items = dedupe(reroute(all_items, routing))
+    if binned:
+        print(f"Filtered out {binned} gear/product item{'' if binned == 1 else 's'}.")
     blocks = [
         (sec["title"], rank([i for i in all_items if i["section"] == sec["key"]], watchlist))
         for sec in config["sections"]
     ]
-    html = build_html(blocks, config.get("events", []), failures, watchlist)
+    events = config.get("events", [])
+    article, api_key = None, os.environ.get("ANTHROPIC_API_KEY")
+    if api_key and any(items for _, items in blocks):
+        try:
+            article = write_article(blocks, events, api_key)
+            print("Brief written by Claude.")
+        except Exception as exc:
+            failures.append(f"writer unavailable ({exc.__class__.__name__})")
+            print(f"Writer failed, falling back to links: {exc}")
+    elif not api_key:
+        print("No ANTHROPIC_API_KEY set — sending the link version.")
+
+    html = build_html(blocks, events, failures, watchlist, article)
 
     DOCS.mkdir(exist_ok=True)
     (DOCS / "archive").mkdir(exist_ok=True)
